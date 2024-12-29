@@ -1,24 +1,12 @@
 // routes/users.js
-const express = require("express");
-const {
-  validateCreateStock,
-  validateGetStocks,
-  validateUpdateStock,
-} = require("../validators/stocks");
-const {
-  createStock,
-  getStocksByCollectionId,
-  updateStockById,
-} = require("../controllers/stocks");
+import express from 'express';
+import * as stocksValidators from '../validators/stocks.js';
+import * as stocksControllers from '../controllers/stocks.js';
 const router = express.Router();
 
-// create user
-router.post("/", validateCreateStock, createStock);
-router.get(
-  "/by_collection_id/:collection_id",
-  validateGetStocks,
-  getStocksByCollectionId
-);
-router.put("/", validateUpdateStock, updateStockById);
+router.get("/:collection_id/stocks", stocksValidators.validateGetStocks, stocksControllers.getStocksByCollectionId);
+router.get("/:collection_id/stocks/:stock_id", stocksControllers.getStockById);
+router.post("/:collection_id/products/:product_id/stocks", stocksValidators.validateCreateStock, stocksControllers.createStock);
+router.put("/:collection_id/products/:product_id/stocks/:stock_id", stocksValidators.validateUpdateStock, stocksControllers.updateStockById);
 
-module.exports = router;
+export default router;

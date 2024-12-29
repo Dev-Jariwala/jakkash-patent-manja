@@ -1,28 +1,14 @@
 // routes/products.js
-const express = require("express");
-const {
-  createProduct,
-  getProductsByCollectionId,
-  updateProductById,
-  softDeleteProductById,
-  getProductById,
-} = require("../controllers/products");
-const {
-  validateCreateProduct,
-  validateUpdateProduct,
-  validateGetProducts,
-  validateSoftDeleteProduct,
-} = require("../validators/products");
+import express from 'express';
+import * as productValidators from "../validators/products.js";
+import * as productControllers from "../controllers/products.js";
+
 const router = express.Router();
 
-router.post("/", validateCreateProduct, createProduct);
-router.post("/soft_delete", validateSoftDeleteProduct, softDeleteProductById);
-router.put("/", validateUpdateProduct, updateProductById);
-router.get(
-  "/by_collection_id/:collection_id",
-  validateGetProducts,
-  getProductsByCollectionId
-);
-router.get("/by_product_id/:product_id", getProductById);
+router.get("/:collection_id/products", productValidators.validateGetProducts, productControllers.getProductsByCollectionId);
+router.get("/:collection_id/products/:product_id", productControllers.getProductById);
+router.post("/:collection_id/products", productValidators.validateCreateProduct, productControllers.createProduct);
+router.put("/:collection_id/products/:product_id", productValidators.validateUpdateProduct, productControllers.updateProductById);
+router.delete("/:collection_id/products/:product_id", productValidators.validateDeleteProduct, productControllers.deleteProductById);
 
-module.exports = router;
+export default router;

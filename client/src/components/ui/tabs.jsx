@@ -11,9 +11,9 @@ const TabsTriggerVariants = cva(
       variant: {
         default:
           "data-[state=active]:tw-bg-background data-[state=active]:tw-text-foreground data-[state=active]:tw-shadow-sm",
-        team: "tw-border-b hover:tw-bg-gray-100 hover:tw-rounded tw-py-2",
+        team: "tw-border-b hover:tw-bg-accent hover:tw-rounded tw-py-2",
         sliding:
-          "tw-text-base tw-px-4 tw-py-2 tw-text-gray-700 tw-mx-1 tw-rounded-sm tw-relative data-[state=active]:tw-text-indigo-500 data-[state=active]:tw-shadow-indigo-500 data-[state=active]:focus:tw-relative hover:tw-bg-gray-200/60",
+          "tw-text-base tw-px-4 tw-py-2 tw-text-gray-700 tw-mx-1 tw-rounded-sm tw-relative data-[state=active]:tw-text-indigo-500 data-[state=active]:tw-shadow-indigo-500 data-[state=active]:focus:tw-relative hover:tw-bg-accent",
       },
     },
     defaultVariants: {
@@ -28,7 +28,7 @@ const TabsList = React.forwardRef(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "tw-inline-flex tw-gap-1 tw-items-center tw-bg-white tw-py-1 tw-px-2 tw-text-muted-foreground",
+      "tw-inline-flex tw-gap-1 tw-items-center tw-bg-card tw-py-1 tw-px-2 tw-text-muted-foreground",
       className
     )}
     {...props}

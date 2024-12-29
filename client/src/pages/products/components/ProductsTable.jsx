@@ -1,4 +1,3 @@
-import { useAuth } from "@/hooks/authProvider";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
@@ -7,9 +6,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import axios from "axios";
-import { useMemo, useState, useEffect, useCallback } from "react";
-import debounce from "lodash.debounce";
+import { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -19,7 +16,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import {
@@ -30,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { Pencil } from "lucide-react";
 import { Chip } from "@/components/ui/chip";
+import { useDebounce, useLocalStorage } from "@uidotdev/usehooks";
+import { getProductsByCollectionId } from "@/services/products";
 
 const columnHelper = createColumnHelper();
 const columnsDef = [
@@ -56,7 +54,7 @@ const columnsDef = [
           variant={"light"}
           border={"none"}
           size={"xs"}
-          color={info.getValue() === 0 ? "indigo" : "gray"}
+          color={!info.getValue() ? "indigo" : "gray"}
           className={''}
         >
           {info.getValue() ? "Labour" : "Product"}
@@ -67,44 +65,22 @@ const columnsDef = [
 ];
 
 const ProductsTable = () => {
-  const { activeCollection } = useAuth();
+  const [activeCollection] = useLocalStorage("activeCollection", null);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 5,
   });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-
-  const debouncedSetSearchQuery = useCallback(
-    debounce((query) => {
-      setDebouncedQuery(query);
-    }, 500),
-    []
-  );
-
-  useEffect(() => {
-    debouncedSetSearchQuery(searchQuery);
-  }, [searchQuery, debouncedSetSearchQuery]);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data: productData } = useQuery({
-    queryKey: ["products", activeCollection, pagination, debouncedQuery],
+    queryKey: ["products", activeCollection, pagination, debouncedSearch],
     queryFn: async () => {
-      const response = await axios({
-        method: "GET",
-        url: `${import.meta.env.VITE_BACKEND_URL}products/by_collection_id/${
-          activeCollection.value
-        }?page=${pagination.pageIndex + 1}&limit=${
-          pagination.pageSize
-        }&search=${debouncedQuery}`,
-        params: {
-          pageIndex: pagination.pageIndex,
-          pageSize: pagination.pageSize,
-        },
-      });
+      const response = await getProductsByCollectionId({ activeCollection, pagination, debouncedSearch });
       return response.data;
     },
     placeholderData: keepPreviousData,
-    enabled: !!activeCollection?.value,
+    enabled: !!activeCollection,
   });
 
   const data = useMemo(() => productData?.products ?? [], [productData]);
@@ -126,8 +102,8 @@ const ProductsTable = () => {
     <>
       <div className="tw-flex tw-items-center tw-justify-between tw-px-4">
         <Input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search product name..."
           className="tw-max-w-64"
         />
@@ -147,9 +123,9 @@ const ProductsTable = () => {
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     );
                   })}

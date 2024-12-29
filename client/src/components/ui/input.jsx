@@ -24,6 +24,7 @@ const Input = React.forwardRef(({ variant, className, type, ...props }, ref) => 
         className
       )}
       ref={ref}
+      autoComplete="new-password"
       {...props} />)
   );
 })

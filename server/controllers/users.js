@@ -1,29 +1,39 @@
 // controller/users.js
-const db = require("../db");
-require("../logger");
-const winston = require("winston");
+import "../logger.js";
+import winston from "winston";
+import passport from "passport";
+import jwt from "jsonwebtoken";
+import { query } from "../utils/query.js";
+
+// create table users(
+// 	sr_no serial primary key,
+// 	user_id UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+// 	username varchar(50) not null unique,
+// 	password varchar(255) not null
+// );
+
 const errorLogger = winston.loggers.get("error-logger");
-const passport = require("passport");
-const jwt = require("jsonwebtoken");
-// exports.registerUser = async (req, res) => {
-//   const { username, password } = req.body;
-//   try {
-//     const user_id = `user_` + Date.now();
-//     console.log(user_id, username, password);
-//     await db.query(
-//       "insert into users (user_id, username, password) values (?, ?, ?)",
-//       [user_id, username, password]
-//     );
-//     res.status(201).json({
-//       message: "User registered successfully",
-//       user: { user_id, username, password },
-//     });
-//   } catch (error) {
-//     errorLogger.error(error);
-//     res.status(500).json({ message: error.message, error });
-//   }
-// };
-exports.signupUser = (req, res, next) => {
+export const registerUser = async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const [newUser] = await query(
+      "insert into users ( username, password) values ($1, $2) returning *",
+      [username, password]
+    );
+    if (!newUser) {
+      throw new Error("Failed to register user");
+    }
+    res.status(201).json({
+      message: "User registered successfully",
+      user: newUser,
+    });
+  } catch (error) {
+    errorLogger.error(error);
+    console.log(error);
+    res.status(500).json({ message: error.message, error });
+  }
+};
+export const signupUser = (req, res, next) => {
   try {
     passport.authenticate("local", { session: false }, (err, user, info) => {
       if (err) return res.status(400).json(err);
@@ -36,7 +46,7 @@ exports.signupUser = (req, res, next) => {
           { user_id: user.user_id, username: user.username },
           process.env.JWT_SECRET,
           {
-            expiresIn: 60 * 60,
+            // expiresIn: 60 * 60,
           }
         );
         return res.json({
@@ -46,6 +56,7 @@ exports.signupUser = (req, res, next) => {
     })(req, res, next);
   } catch (error) {
     errorLogger.error(error);
+    console.log(error);
     res.status(500).json({ message: error.message, error });
   }
 };

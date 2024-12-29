@@ -1,17 +1,12 @@
 // routes/collection.js
-const express = require("express");
-const {
-  createCollection,
-  getCollections,
-  getCollectionOptions,
-  setIsActive,
-} = require("../controllers/collection");
-const { validateCreateCollection } = require("../validators/collections");
+import express from "express";
+import * as collectionValidators from "../validators/collections.js";
+import * as collectionControllers from "../controllers/collection.js";
 const router = express.Router();
 
 // create collection
-router.post("/", validateCreateCollection, createCollection);
-router.get("/", getCollections);
-router.get("/options", getCollectionOptions);
-router.put("/set_active/:collection_id", setIsActive);
-module.exports = router;
+router.get("/", collectionControllers.getCollections);
+router.post("/", collectionValidators.validateCreateCollection, collectionControllers.createCollection);
+router.put("/:collection_id", collectionValidators.validateCreateCollection, collectionControllers.updateCollection);
+
+export default router;

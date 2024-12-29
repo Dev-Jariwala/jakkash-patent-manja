@@ -23,7 +23,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BreadCrum from "@/components/breadcrum/BreadCrum";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/hooks/authProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createProduct,
@@ -32,18 +31,18 @@ import {
 } from "@/services/products";
 import MutationError from "@/components/Errors/MutationError";
 import QueryError from "@/components/Errors/QueryError";
+import { useLocalStorage } from "@uidotdev/usehooks";
 const schema = yup.object().shape({
-  collection_id: yup.string().required("Collection ID is required"),
   product_name: yup.string().required("Product Name is required"),
   wholesale_price: yup
     .number()
+    .min(0, 'Wholesale Price must be at least 0')
     .required("Wholesale Price is required")
-    .positive("Wholesale Price must be positive")
     .typeError("Wholesale Price is required"),
   retail_price: yup
     .number()
+    .min(0, 'Wholesale Price must be at least 0')
     .required("Retail Price is required")
-    .positive("Retail Price must be positive")
     .typeError("Retail Price is required"),
   is_labour: yup
     .string()
@@ -52,7 +51,7 @@ const schema = yup.object().shape({
 });
 
 const ProductForm = () => {
-  const { activeCollection } = useAuth();
+  const [activeCollection] = useLocalStorage("activeCollection", null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,44 +61,25 @@ const ProductForm = () => {
   const form = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      collection_id: activeCollection?.value || null,
       product_name: "",
       retail_price: "",
       wholesale_price: "",
       is_labour: 0,
     },
   });
-  useEffect(() => {
-    form.setValue("collection_id", activeCollection?.value || "");
-  }, [activeCollection]);
-  const {
-    data: product,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
+
+  const { data: product, isLoading, isError, error, } = useQuery({
     queryKey: ["product", activeCollection, product_id],
     queryFn: async () => {
-      const res = await getProductById(product_id);
+      const res = await getProductById({ activeCollection, product_id });
       return res.data.product;
     },
-    enabled: !!product_id && formType === "update",
+    enabled: !!activeCollection && !!product_id && formType === "update",
   });
-  useEffect(() => {
-    if (product && product?.collection_id === activeCollection?.value) {
-      form.reset({
-        collection_id: activeCollection?.value || null,
-        product_name: product?.product_name,
-        retail_price: product?.retail_price,
-        wholesale_price: product?.wholesale_price,
-        is_labour: product?.is_labour,
-      });
-    }
-  }, [product, product_id]);
+
   const createProductMutation = useMutation({
-    mutationKey: ["products"],
     mutationFn: async (data) => {
-      return await createProduct(data);
+      return await createProduct({ activeCollection, data });
     },
     onSuccess: () => {
       navigate("/products");
@@ -107,9 +87,8 @@ const ProductForm = () => {
     },
   });
   const updateProductMutation = useMutation({
-    mutationKey: ["products"],
     mutationFn: async (data) => {
-      return await updateProductById(data);
+      return await updateProductById({ activeCollection, product_id, data });
     },
     onSuccess: () => {
       navigate("/products");
@@ -118,18 +97,25 @@ const ProductForm = () => {
   });
   const onSubmit = async (data) => {
     if (formType === "new") {
-      createProductMutation.mutate({
-        ...data,
-        collection_id: activeCollection?.value,
-      });
+      createProductMutation.mutate(data);
     } else if (formType === "update") {
-      updateProductMutation.mutate({
-        product_id,
-        ...data,
-      });
+      updateProductMutation.mutate(data);
     }
   };
-  if (product && product?.collection_id !== activeCollection?.value) {
+  useEffect(() => {
+    if (product && product?.collection_id === activeCollection) {
+      console.log(product);
+      form.reset({
+        collection_id: activeCollection || null,
+        product_name: product?.product_name,
+        retail_price: product?.retail_price,
+        wholesale_price: product?.wholesale_price,
+        is_labour: product?.is_labour ? 1 : 0,
+      });
+    }
+  }, [product, product_id, activeCollection]);
+
+  if (product && product?.collection_id !== activeCollection) {
     return (
       <div className="tw-text-center tw-text-xl tw-text-red-500 tw-font-medium">
         This product does not belong to this collection.
@@ -158,30 +144,6 @@ const ProductForm = () => {
           className="tw-w-full tw-px-5"
         >
           <div className=" tw-grid lg:tw-grid-cols-3 tw-gap-5">
-            {activeCollection && (
-              <FormField
-                control={form.control}
-                name="collection_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Collection</FormLabel>
-                    <FormControl>
-                      <Select value={field.value} disabled>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Collection" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={activeCollection?.value}>
-                            {activeCollection?.label}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
             <FormField
               control={form.control}
               name="product_name"

@@ -1,7 +1,8 @@
 // config/passport.js
-const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
-const db = require("../db");
+import passport from "passport";
+import passportLocal from "passport-local";
+import { query } from "../utils/query.js";
+const LocalStrategy = passportLocal.Strategy;
 
 passport.use(
   "local",
@@ -13,8 +14,8 @@ passport.use(
     },
     async function (username, password, done) {
       try {
-        const [[user]] = await db.query(
-          "SELECT * FROM users WHERE username = ?",
+        const [user] = await query(
+          "SELECT * FROM users WHERE username = $1",
           [username]
         );
         if (!user) {
@@ -27,6 +28,7 @@ passport.use(
 
         return done(null, user);
       } catch (error) {
+        console.error(error);
         return done(error);
       }
     }
@@ -39,7 +41,7 @@ passport.serializeUser(function (user, done) {
 
 passport.deserializeUser(async function (user_id, done) {
   try {
-    const [[user]] = await db.query("SELECT * FROM users WHERE user_id = ?", [
+    const [user] = await query("SELECT * FROM users WHERE user_id = $1", [
       user_id,
     ]);
     done(null, user);
@@ -48,4 +50,4 @@ passport.deserializeUser(async function (user_id, done) {
   }
 });
 
-module.exports = passport;
+export default passport;

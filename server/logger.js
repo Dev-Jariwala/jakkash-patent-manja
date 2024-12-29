@@ -1,4 +1,4 @@
-const winston = require("winston");
+import winston from "winston";
 const { combine, errors, timestamp, json, prettyPrint } = winston.format;
 winston.loggers.add("error-logger", {
   level: "error",

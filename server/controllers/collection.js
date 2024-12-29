@@ -1,60 +1,60 @@
 // controllers/collection.js
-const db = require("../db");
-require("../logger");
-const winston = require("winston");
-const errorLogger = winston.loggers.get("error-logger");
+import { handleError } from "../utils/error.js";
+import { query } from "../utils/query.js";
 
-exports.createCollection = async (req, res, next) => {
+/* -- Table: collections
+CREATE TABLE collections (
+  sr_no SERIAL PRIMARY KEY,
+    collection_id UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+    collection_name VARCHAR(50) NOT NULL
+);
+*/
+
+export const createCollection = async (req, res) => {
   try {
     const { collection_name } = req.body;
-    const collection_id = "collection_" + Date.now();
-    await db.query(
-      "INSERT INTO collections (collection_id, collection_name) VALUES (?, ?)",
-      [collection_id, collection_name]
+    const [newCollection] = await query(
+      "INSERT INTO collections (collection_name) VALUES ($1) returning *",
+      [collection_name]
     );
+    if (!newCollection) {
+      res.status(400).json({ error: "Error creating collection" })
+    }
 
     res.status(201).json({
       message: "Collection created successfully",
-      collection: { collection_id, collection_name },
+      collection: newCollection,
     });
   } catch (error) {
-    errorLogger.error(error);
-    res.status(500).json({ message: error.message, error });
+    handleError('createCollection', res, error);
   }
 };
-// get collections
 
-exports.getCollections = async (req, res, next) => {
+export const getCollections = async (req, res) => {
   try {
-    const [collections] = await db.query("SELECT * FROM collections");
+    const collections = await query("SELECT * FROM collections order by sr_no asc");
     res.status(200).json({ collections });
   } catch (error) {
-    errorLogger.error(error);
-    res.status(500).json({ message: error.message, error });
+    handleError('getCollections', res, error);
   }
 };
-exports.getCollectionOptions = async (req, res, next) => {
-  try {
-    const [collections] = await db.query(
-      "SELECT collection_id as value, collection_name as label, is_active FROM collections"
-    );
-    res.status(200).json({ collections });
-  } catch (error) {
-    errorLogger.error(error);
-    res.status(500).json({ message: error.message, error });
-  }
-};
-exports.setIsActive = async (req, res, next) => {
+
+export const updateCollection = async (req, res) => {
   try {
     const { collection_id } = req.params;
-    await db.query("update collections set is_active = 0 where is_active = 1");
-    await db.query(
-      "update collections set is_active = 1 where collection_id = ?",
-      [collection_id]
+    const { collection_name } = req.body;
+    const [updatedCollection] = await query(
+      "UPDATE collections SET collection_name=$1 WHERE collection_id=$2 RETURNING *",
+      [collection_name, collection_id]
     );
-    res.status(200).json({ message: "is_active setted" });
+    if (!updatedCollection) {
+      res.status(404).json({ error: "Collection not found" });
+    }
+    res.status(200).json({
+      message: "Collection updated successfully",
+      collection: updatedCollection,
+    });
   } catch (error) {
-    errorLogger.error(error);
-    res.status(500).json({ message: error.message, error });
+    handleError('updateCollection', res, error);
   }
-};
+}

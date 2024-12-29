@@ -2,8 +2,14 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { Outlet } from "react-router-dom";
-import { TbLayoutDashboardFilled } from "react-icons/tb";
-import { FaCartPlus } from "react-icons/fa6";
+import { Store } from "lucide-react";
+import BillSvg from "../svgs/BillSvg";
+import DashboardSvg from "../svgs/DashboardSvg";
+import StocksSvg from "../svgs/StocksSvg";
+import ProductSvg from "../svgs/ProductSvg";
+import ClientSvg from "../svgs/ClientSvg";
+import PurchaseSvg from "../svgs/PurchaseSvg";
+import AnalyticsSvg from "../svgs/AnalyticsSvg";
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -15,14 +21,44 @@ const Layout = () => {
     {
       link: "/",
       label: "Dashboard",
-      icon: <TbLayoutDashboardFilled />,
+      icon: <DashboardSvg />,
       active: [""],
     },
     {
       link: "/products",
       label: "Products",
-      icon: <FaCartPlus />,
+      icon: <ProductSvg />,
       active: ["products"],
+    },
+    {
+      link: "/bills",
+      label: "Bills",
+      icon: <BillSvg />,
+      active: ["bills"],
+    },
+    {
+      link: "/stocks",
+      label: "Stocks",
+      icon: <StocksSvg />,
+      active: ["stocks"],
+    },
+    {
+      link: "/clients",
+      label: "Clients",
+      icon: <ClientSvg />,
+      active: ["clients"],
+    },
+    {
+      link: "/purchases",
+      label: "Purchases",
+      icon: <PurchaseSvg />,
+      active: ["purchases"],
+    },
+    {
+      link: "/analytics",
+      label: "Analytics",
+      icon: <AnalyticsSvg />,
+      active: ["analytics"],
     },
   ];
   return (

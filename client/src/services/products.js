@@ -1,38 +1,38 @@
 import axios from "axios";
 const token = localStorage.getItem("token");
 axios.defaults.headers.common["Authorization"] = token;
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-export async function getProductsByCollectionId({ queryKey }) {
-  const [_key, { collectionId, page, limit, sortField, sortOrder, search }] =
-    queryKey;
-  const { data } = await axios({
+export const getProductsByCollectionId = async ({ activeCollection, pagination, debouncedSearch = '' }) => {
+  const response = await axios({
     method: "GET",
-    url: `${BACKEND_URL}products/${collectionId}`,
-    params: { page, limit, sortField, sortOrder, search },
+    url: `${import.meta.env.VITE_BACKEND_URL}collections/${activeCollection}/products?page=${pagination?.pageIndex + 1}&limit=${pagination?.pageSize}&search=${debouncedSearch}`,
+    params: {
+      pageIndex: pagination.pageIndex,
+      pageSize: pagination.pageSize,
+    },
   });
-  return data;
+  return response;
 }
-export async function createProduct(data) {
+export async function createProduct({ activeCollection, data }) {
   const res = await axios({
     method: "POST",
-    url: `${BACKEND_URL}products`,
+    url: `${import.meta.env.VITE_BACKEND_URL}collections/${activeCollection}/products`,
     data,
   });
   return res;
 }
-export async function updateProductById(data) {
+export async function updateProductById({ activeCollection, product_id, data }) {
   const res = await axios({
     method: "PUT",
-    url: `${BACKEND_URL}products`,
+    url: `${import.meta.env.VITE_BACKEND_URL}collections/${activeCollection}/products/${product_id}`,
     data,
   });
   return res;
 }
-export async function getProductById(product_id) {
+export async function getProductById({ activeCollection, product_id }) {
   const res = await axios({
     method: "GET",
-    url: `${BACKEND_URL}products/by_product_id/${product_id}`,
+    url: `${import.meta.env.VITE_BACKEND_URL}collections/${activeCollection}/products/${product_id}`,
   });
   return res;
 }
